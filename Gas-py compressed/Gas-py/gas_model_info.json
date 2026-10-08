@@ -1,0 +1,47 @@
+{
+    "algorithm": "Random Forest",
+    "n_estimators": 300,
+    "random_state": 42,
+    "features": [
+        "gas1",
+        "gas2",
+        "gas3"
+    ],
+    "sensor_mapping": {
+        "gas1": "MQ-2",
+        "gas2": "MQ-8",
+        "gas3": "MQ-135"
+    },
+    "classes": [
+        "Alcohol",
+        "Ammonia",
+        "Butane",
+        "LPG",
+        "Methane",
+        "Normal",
+        "Smoke"
+    ],
+    "train_samples": 35000,
+    "validation_samples": 7500,
+    "test_samples": 7501,
+    "training_accuracy": 1.0,
+    "validation_accuracy": 1.0,
+    "test_accuracy": 1.0,
+    "thresholds": {
+        "MQ-2": {
+            "Normal": "0-150",
+            "Smoke": ">2500"
+        },
+        "MQ-8": {
+            "Normal/Other": "0-5000",
+            "Butane": "5001-6000",
+            "LPG": "6001-7000",
+            "Methane": ">7000"
+        },
+        "MQ-135": {
+            "Normal": "0-2899",
+            "Alcohol": "2900-3299",
+            "Ammonia": ">=3300"
+        }
+    }
+}

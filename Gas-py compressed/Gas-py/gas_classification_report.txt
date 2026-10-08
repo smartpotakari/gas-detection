@@ -1,0 +1,25 @@
+MQ-2 + MQ-8 + MQ-135 GAS CLASSIFICATION REPORT
+======================================================================
+
+Sensors:
+gas1 = MQ-2
+gas2 = MQ-8
+gas3 = MQ-135
+
+Training Accuracy   : 100.00%
+Validation Accuracy : 100.00%
+Test Accuracy       : 100.00%
+
+              precision    recall  f1-score   support
+
+     Alcohol     1.0000    1.0000    1.0000      1071
+     Ammonia     1.0000    1.0000    1.0000      1071
+      Butane     1.0000    1.0000    1.0000      1072
+         LPG     1.0000    1.0000    1.0000      1072
+     Methane     1.0000    1.0000    1.0000      1072
+      Normal     1.0000    1.0000    1.0000      1071
+       Smoke     1.0000    1.0000    1.0000      1072
+
+    accuracy                         1.0000      7501
+   macro avg     1.0000    1.0000    1.0000      7501
+weighted avg     1.0000    1.0000    1.0000      7501

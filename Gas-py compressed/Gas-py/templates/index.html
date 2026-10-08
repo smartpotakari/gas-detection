@@ -1,0 +1,646 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GasSense AI - Gas Detection Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07111f;--card:#101f33;--card2:#13263d;--border:rgba(255,255,255,.09);--text:#f8fafc;--muted:#91a4bb;--cyan:#22d3ee;--green:#22c55e;--red:#ef4444;--purple:#a78bfa}
+body{min-height:100vh;font-family:"Segoe UI",Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 0%,rgba(34,211,238,.12),transparent 30%),radial-gradient(circle at 90% 0%,rgba(124,58,237,.1),transparent 30%),linear-gradient(135deg,#040b14,#071525 50%,#081321)}
+.header{height:82px;display:flex;align-items:center;justify-content:space-between;padding:0 45px;position:sticky;top:0;z-index:10;background:rgba(4,11,20,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:13px;color:#03131b;font-weight:900;background:linear-gradient(135deg,#67e8f9,#06b6d4)}
+.brand-title{font-size:21px;font-weight:900}
+.brand-subtitle{margin-top:3px;color:var(--muted);font-size:9px;letter-spacing:1.4px;text-transform:uppercase}
+.header-status{display:flex;align-items:center;gap:9px;padding:10px 16px;border:1px solid var(--border);border-radius:30px;background:rgba(255,255,255,.035);font-size:11px;color:var(--muted)}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#64748b}
+.status-dot.running{background:var(--green);box-shadow:0 0 14px rgba(34,197,94,.7)}
+.status-dot.error{background:var(--red);box-shadow:0 0 14px rgba(239,68,68,.7)}
+.container{width:min(1500px,calc(100% - 70px));margin:auto;padding:38px 0 60px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:25px;margin-bottom:28px}
+.hero-tag{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase}
+.hero h1{margin-top:10px;font-size:clamp(38px,5vw,60px);line-height:1.05;letter-spacing:-2px}
+.hero h1 span{background:linear-gradient(90deg,#fff,#67e8f9);-webkit-background-clip:text;color:transparent}
+.hero-description{max-width:700px;margin-top:13px;color:var(--muted);font-size:13px;line-height:1.7}
+.clock-box{min-width:220px;padding:18px 22px;border:1px solid var(--border);border-radius:17px;background:rgba(18,38,61,.9);text-align:center}
+.clock-label{color:var(--muted);font-size:9px;letter-spacing:1.2px;text-transform:uppercase}
+.clock{margin-top:5px;font-size:25px;font-weight:900}
+.date{margin-top:4px;color:var(--muted);font-size:11px}
+.control-bar{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:16px;margin-bottom:30px;border:1px solid var(--border);border-radius:17px;background:rgba(14,31,51,.9)}
+.buttons{display:flex;flex-wrap:wrap;gap:9px}
+.btn{min-height:42px;padding:0 18px;border-radius:9px;border:1px solid var(--border);font-family:inherit;font-size:10px;font-weight:850;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.start{color:#031016;background:linear-gradient(135deg,#67e8f9,#06b6d4);border:0}
+.stop{color:#fecaca;background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
+.database{color:#ddd6fe;background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.25)}
+.clear{color:#fca5a5;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.15)}
+.monitoring-text{color:var(--muted);font-size:10px}
+.section-head{margin-bottom:14px}
+.section-title{font-size:15px;font-weight:900}
+.section-subtitle{margin-top:4px;color:var(--muted);font-size:10px}
+.sensor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.sensor-card{position:relative;padding:24px;min-height:205px;border:1px solid var(--border);border-radius:19px;background:linear-gradient(145deg,rgba(18,39,63,.98),rgba(8,21,36,.98));box-shadow:0 15px 45px rgba(0,0,0,.22)}
+.sensor-header{display:flex;justify-content:space-between;align-items:center}
+.sensor-name{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.sensor-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--cyan);background:rgba(34,211,238,.09);font-size:10px;font-weight:900}
+.sensor-value{margin-top:24px;font-size:40px;font-weight:950}
+.sensor-value small{color:#687c94;font-size:11px;font-weight:600}
+.bar{height:7px;margin-top:20px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.07)}
+.bar-fill{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#0891b2,#67e8f9);transition:width .5s}
+.sensor-footer{display:flex;justify-content:space-between;margin-top:11px;color:#71839a;font-size:9px}
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
+.prediction-card,.system-card,.records-card{border:1px solid var(--border);border-radius:21px;background:rgba(13,29,48,.96);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.prediction-card{min-height:360px;padding:30px}
+.prediction-content{height:100%;display:grid;grid-template-columns:1fr 250px;align-items:center;gap:25px}
+.prediction-label{color:var(--cyan);font-size:10px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
+.prediction-title{margin-top:7px;color:var(--muted);font-size:13px}
+.prediction{margin-top:19px;font-size:clamp(40px,5vw,65px);font-weight:950;letter-spacing:-2px}
+.prediction-description{max-width:570px;margin-top:13px;color:var(--muted);font-size:11px;line-height:1.7}
+.prediction-time{margin-top:20px;color:var(--muted);font-size:10px}
+.prediction-time strong{color:white}
+.confidence-area{display:flex;justify-content:center}
+.confidence-ring{width:205px;height:205px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:conic-gradient(#22d3ee 0deg,rgba(255,255,255,.08) 0deg);box-shadow:0 0 60px rgba(34,211,238,.1)}
+.confidence-ring:before{content:"";position:absolute;width:168px;height:168px;border-radius:50%;background:#091a2c;border:1px solid rgba(255,255,255,.07)}
+.confidence-inner{position:relative;z-index:2;text-align:center}
+.confidence-number{font-size:35px;font-weight:950}
+.confidence-label{margin-top:4px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px}
+
+
+
+
+
+
+
+
+
+
+.records-card{overflow:hidden}
+.records-head{display:flex;justify-content:space-between;align-items:center;padding:22px 24px;border-bottom:1px solid var(--border)}
+.records-head h2{font-size:16px;font-weight:900}
+.records-head p{margin-top:4px;color:var(--muted);font-size:9px}
+.latest{padding:7px 11px;border-radius:20px;color:var(--cyan);background:rgba(34,211,238,.08);font-size:8px;font-weight:900}
+.table-wrapper{overflow-x:auto}
+table{width:100%;min-width:850px;border-collapse:collapse}
+th{padding:14px;color:#7890a8;background:rgba(255,255,255,.025);border-bottom:1px solid var(--border);font-size:8px;letter-spacing:.7px;text-transform:uppercase;text-align:left}
+td{padding:16px;color:#d4deea;border-bottom:1px solid rgba(255,255,255,.05);font-size:10px}
+.prediction-badge{display:inline-flex;padding:6px 10px;border-radius:20px;color:#c8f9ff;background:rgba(34,211,238,.08);font-size:8px;font-weight:900}
+.confidence-cell{font-weight:900}.timestamp{color:#94a6bb;font-size:9px}
+.empty{padding:50px!important;text-align:center;color:#61758c!important}
+.overlay{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.76);backdrop-filter:blur(10px)}
+.overlay.show{display:flex}
+.alert-box{width:min(500px,100%);padding:30px;text-align:center;border:1px solid rgba(34,211,238,.2);border-radius:23px;background:linear-gradient(145deg,#122a43,#071726)}
+.alert-icon{width:60px;height:60px;margin:auto auto 15px;display:flex;align-items:center;justify-content:center;border-radius:18px;color:var(--cyan);background:rgba(34,211,238,.1);font-size:25px;font-weight:900}
+.alert-small{color:var(--muted);font-size:9px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase}
+.alert-prediction{margin-top:9px;font-size:35px;font-weight:950}
+.alert-confidence{margin-top:6px;color:var(--cyan);font-size:13px;font-weight:900}
+.alert-time{margin-top:5px;color:var(--muted);font-size:9px}
+.alert-values{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}
+.alert-value{padding:11px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
+.alert-value span{display:block;color:var(--muted);font-size:7px;text-transform:uppercase}
+.alert-value strong{display:block;margin-top:4px;font-size:13px}
+.ack{width:100%;height:43px;margin-top:20px;border:0;border-radius:9px;color:#031016;background:linear-gradient(135deg,#67e8f9,#06b6d4);font-weight:900;cursor:pointer}
+.confirm-box{width:min(420px,100%);padding:28px;border:1px solid rgba(239,68,68,.22);border-radius:19px;background:#0d1d30}
+.confirm-title{font-size:20px;font-weight:900}
+.confirm-text{margin-top:9px;color:var(--muted);font-size:10px;line-height:1.7}
+.confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.toast{position:fixed;right:22px;bottom:22px;z-index:200;padding:13px 17px;border:1px solid var(--border);border-radius:11px;background:#12243a;font-size:10px;transform:translateY(80px);opacity:0;transition:.3s}
+.toast.show{transform:translateY(0);opacity:1}
+footer{display:flex;justify-content:space-between;margin-top:28px;padding-top:17px;color:#60738b;border-top:1px solid var(--border);font-size:8px}
+
+.graph-section{margin-bottom:0;height:100%}
+.graph-card{padding:24px;border:1px solid var(--border);border-radius:21px;background:rgba(13,29,48,.96);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.graph-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}
+.graph-title{font-size:15px;font-weight:900}
+.graph-subtitle{margin-top:4px;color:var(--muted);font-size:10px}
+.graph-live{padding:7px 10px;border-radius:20px;color:var(--green);background:rgba(34,197,94,.08);font-size:8px;font-weight:900}
+.chart-wrap{position:relative;width:100%;height:360px}
+@media(max-width:650px){.chart-wrap{height:260px}.graph-head{align-items:flex-start}}
+@media(max-width:1000px){.hero{flex-direction:column;align-items:flex-start}.sensor-grid{grid-template-columns:1fr}.main-grid{grid-template-columns:1fr}.prediction-content{grid-template-columns:1fr}}
+@media(max-width:650px){.header{padding:0 18px}.container{width:calc(100% - 30px)}.header-status{display:none}.control-bar{flex-direction:column;align-items:flex-start}.monitoring-text{width:100%}.alert-values{grid-template-columns:repeat(2,1fr)}footer{flex-direction:column;gap:6px}}
+</style>
+</head>
+<body>
+<header class="header">
+<div class="brand">
+<div class="logo">GS</div>
+<div>
+<div class="brand-title">SmartSense AI</div>
+<div class="brand-subtitle">Real-Time Electronic Nose Intelligence</div>
+</div>
+</div>
+<div class="header-status">
+<span id="statusDot" class="status-dot"></span>
+<span id="statusText">System Standby</span>
+</div>
+</header>
+
+<main class="container">
+<section class="hero">
+<div>
+<div class="hero-tag">AI Powered Gas Monitoring</div>
+<h1>Gas Detection & <span>Smell Classification</span></h1>
+<p class="hero-description">Real-time monitoring using MQ-2, MQ-8 and MQ-135 sensors. The system classifies the detected gas pattern using Random Forest or threshold-based conditions.</p>
+</div>
+<div class="clock-box">
+<div class="clock-label">Current System Time</div>
+<div id="clock" class="clock">--:--:--</div>
+<div id="date" class="date">--</div>
+</div>
+</section>
+
+<section class="control-bar">
+<div class="buttons">
+<button id="startBtn" class="btn start" onclick="startMonitoring()">▶ START MONITORING</button>
+<button id="stopBtn" class="btn stop" onclick="stopMonitoring()" disabled>■ STOP MONITORING</button>
+<button class="btn database" onclick="openDatabase()">DATABASE</button>
+<button class="btn clear" onclick="openClearModal()">CLEAR DATABASE</button>
+</div>
+<div id="updateStatus" class="monitoring-text">Monitoring is currently stopped</div>
+</section>
+
+<div class="section-head">
+<div class="section-title">Live Gas Sensor Array</div>
+<div class="section-subtitle">Three-channel MQ sensor readings</div>
+</div>
+
+<section class="sensor-grid">
+<div class="sensor-card">
+<div class="sensor-header">
+<div class="sensor-name">MQ-2 Gas Sensor</div>
+<div class="sensor-icon">MQ2</div>
+</div>
+<div id="gas1Value" class="sensor-value">0 <small>ADC</small></div>
+<div class="bar"><div id="gas1Progress" class="bar-fill"></div></div>
+<div class="sensor-footer"><span>GAS 01</span><span id="gas1Percent">0%</span></div>
+</div>
+
+<div class="sensor-card">
+<div class="sensor-header">
+<div class="sensor-name">MQ-8 Gas Sensor</div>
+<div class="sensor-icon">MQ8</div>
+</div>
+<div id="gas2Value" class="sensor-value">0 <small>ADC</small></div>
+<div class="bar"><div id="gas2Progress" class="bar-fill"></div></div>
+<div class="sensor-footer"><span>GAS 02</span><span id="gas2Percent">0%</span></div>
+</div>
+
+<div class="sensor-card">
+<div class="sensor-header">
+<div class="sensor-name">MQ-135 Gas Sensor</div>
+<div class="sensor-icon">MQ135</div>
+</div>
+<div id="gas3Value" class="sensor-value">0 <small>ADC</small></div>
+<div class="bar"><div id="gas3Progress" class="bar-fill"></div></div>
+<div class="sensor-footer"><span>GAS 03</span><span id="gas3Percent">0%</span></div>
+</div>
+
+</section>
+
+<section class="main-grid">
+<div class="prediction-card">
+<div class="prediction-content">
+<div>
+<div class="prediction-label">Gas Classification Prediction</div>
+<div class="prediction-title">Current detected gas / smell classification</div>
+<div id="prediction" class="prediction">WAITING</div>
+<p class="prediction-description">The system analyzes the three MQ sensor values and identifies the current gas pattern using the selected prediction method.</p>
+<div class="prediction-time">Last Reading: <strong id="predictionTime">No reading yet</strong></div>
+</div>
+<div class="confidence-area">
+<div id="confidenceRing" class="confidence-ring">
+<div class="confidence-inner">
+<div id="confidence" class="confidence-number">0%</div>
+<div class="confidence-label">Confidence</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<section class="graph-section">
+<div class="graph-card">
+<div class="graph-head">
+<div>
+<div class="graph-title">Live Sensor Graph</div>
+<div class="graph-subtitle">MQ-2, MQ-8 and MQ-135 readings updated every 3 seconds using the sensor timestamp</div>
+</div>
+<div class="graph-live">● LIVE</div>
+</div>
+<div class="chart-wrap">
+<canvas id="liveSensorChart"></canvas>
+</div>
+</div>
+</section>
+</section>
+
+<section class="records-card">
+<div class="records-head">
+<div>
+<h2>Recent Predictions</h2>
+<p>Latest 5 stored predictions with sensor readings</p>
+</div>
+<div class="latest">LATEST 5</div>
+</div>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>MQ-2 / GAS1</th>
+<th>MQ-8 / GAS2</th>
+<th>MQ-135 / GAS3</th>
+<th>PREDICTION</th>
+<th>CONFIDENCE</th>
+<th>TIMESTAMP</th>
+</tr>
+</thead>
+<tbody id="recentTable">
+<tr><td colspan="7" class="empty">No sensor records yet. Press START MONITORING to begin.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+<span>GasSense AI • Real-Time Gas Classification</span>
+<span>MQ-2 • MQ-8 • MQ-135</span>
+</footer>
+</main>
+
+<div id="alertOverlay" class="overlay">
+<div class="alert-box">
+<div class="alert-icon">!</div>
+<div class="alert-small">New Gas Prediction Detected</div>
+<div id="alertPrediction" class="alert-prediction">WAITING</div>
+<div id="alertConfidence" class="alert-confidence">Confidence: 0%</div>
+<div id="alertTime" class="alert-time">--</div>
+<div class="alert-values">
+<div class="alert-value"><span>MQ-2 / GAS1</span><strong id="alertGas1">0</strong></div>
+<div class="alert-value"><span>MQ-8 / GAS2</span><strong id="alertGas2">0</strong></div>
+<div class="alert-value"><span>MQ-135 / GAS3</span><strong id="alertGas3">0</strong></div>
+</div>
+<button class="ack" onclick="closeAlert()">ACKNOWLEDGE & CONTINUE</button>
+</div>
+</div>
+
+<div id="confirmOverlay" class="overlay">
+<div class="confirm-box">
+<div class="confirm-title">Clear Entire Database?</div>
+<div class="confirm-text">This will permanently delete every stored sensor reading, prediction, confidence value and timestamp.<br><br>This action cannot be undone.</div>
+<div class="confirm-actions">
+<button class="btn" onclick="closeClearModal()">CANCEL</button>
+<button class="btn clear" onclick="clearDatabase()">DELETE ALL RECORDS</button>
+</div>
+</div>
+</div>
+
+<div id="toast" class="toast">System ready.</div>
+
+<script>
+let monitoring=false,pollingTimer=null,lastAlertedRecordId=null;
+const POLL_INTERVAL=3000;
+
+let liveSensorChart=null;
+const graphLabels=[];
+const graphGas1=[];
+const graphGas2=[];
+const graphGas3=[];
+const MAX_GRAPH_POINTS=30;
+
+function initializeLiveSensorChart(){
+ const ctx=document.getElementById("liveSensorChart");
+ if(!ctx||typeof Chart==="undefined")return;
+
+ liveSensorChart=new Chart(ctx,{
+  type:"line",
+  data:{
+   labels:graphLabels,
+   datasets:[
+    {
+     label:"MQ-2",
+     data:graphGas1,
+     borderWidth:2.5,
+     pointRadius:3.5,
+     pointHoverRadius:6,
+     tension:.35,
+     fill:false,
+     spanGaps:true
+    },
+    {
+     label:"MQ-8",
+     data:graphGas2,
+     borderWidth:2.5,
+     pointRadius:3.5,
+     pointHoverRadius:6,
+     tension:.35,
+     fill:false,
+     spanGaps:true
+    },
+    {
+     label:"MQ-135",
+     data:graphGas3,
+     borderWidth:2.5,
+     pointRadius:3.5,
+     pointHoverRadius:6,
+     tension:.35,
+     fill:false,
+     spanGaps:true
+    }
+   ]
+  },
+  options:{
+   responsive:true,
+   maintainAspectRatio:false,
+   animation:false,
+   normalized:false,
+   interaction:{mode:"index",intersect:false},
+   plugins:{
+    legend:{
+     display:true,
+     position:"top",
+     labels:{boxWidth:10,usePointStyle:true,padding:14}
+    },
+    tooltip:{
+     displayColors:true,
+     callbacks:{
+      title:function(items){
+       return items.length ? "Timestamp: "+items[0].label : "";
+      },
+      label:function(context){
+       return " "+context.dataset.label+": "+Number(context.parsed.y).toFixed(0)+" ADC";
+      }
+     }
+    }
+   },
+   scales:{
+    x:{
+     title:{display:true,text:"Sensor Timestamp"},
+     ticks:{maxRotation:0,minRotation:0,autoSkip:true,maxTicksLimit:8},
+     grid:{display:true}
+    },
+    y:{
+     beginAtZero:false,
+     grace:"5%",
+     title:{display:true,text:"Sensor Value (ADC)"},
+     ticks:{precision:0},
+     grid:{display:true}
+    }
+   }
+  }
+ });
+ updateGraphScale();
+}
+
+function updateGraphScale(){
+ if(!liveSensorChart)return;
+
+ const allValues=[...graphGas1,...graphGas2,...graphGas3]
+  .map(Number)
+  .filter(Number.isFinite);
+
+ if(!allValues.length)return;
+
+ let minValue=Math.min(...allValues);
+ let maxValue=Math.max(...allValues);
+ let range=maxValue-minValue;
+
+ // Give small sensor changes enough vertical space to be visible.
+ const minimumRange=Math.max(100,Math.round(Math.max(1,maxValue)*0.08));
+ if(range<minimumRange){
+  const center=(minValue+maxValue)/2;
+  range=minimumRange;
+  minValue=center-range/2;
+  maxValue=center+range/2;
+ }
+
+ const padding=range*0.12;
+ let yMin=Math.max(0,Math.floor(minValue-padding));
+ let yMax=Math.ceil(maxValue+padding);
+
+ if(yMax<=yMin)yMax=yMin+100;
+
+ liveSensorChart.options.scales.y.min=yMin;
+ liveSensorChart.options.scales.y.max=yMax;
+}
+
+function addGraphReading(gas1,gas2,gas3,timestamp){
+ const values=[
+  Number(gas1)||0,
+  Number(gas2)||0,
+  Number(gas3)||0
+ ];
+
+ // Every API poll is plotted, even when the value or timestamp is identical.
+ // This keeps the graph synchronized with every 3-second sensor reading.
+ let label=timestamp||new Date().toLocaleTimeString("en-IN",{
+  hour:"2-digit",
+  minute:"2-digit",
+  second:"2-digit",
+  hour12:true
+ });
+
+ graphLabels.push(label);
+ graphGas1.push(values[0]);
+ graphGas2.push(values[1]);
+ graphGas3.push(values[2]);
+
+ while(graphLabels.length>MAX_GRAPH_POINTS){
+  graphLabels.shift();
+  graphGas1.shift();
+  graphGas2.shift();
+  graphGas3.shift();
+ }
+
+ if(liveSensorChart){
+  updateGraphScale();
+  liveSensorChart.update("none");
+ }
+}
+
+function updateClock(){
+const now=new Date();
+document.getElementById("clock").textContent=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true});
+document.getElementById("date").textContent=now.toLocaleDateString("en-IN",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+}
+updateClock();
+setInterval(updateClock,1000);
+
+function startMonitoring(){
+if(monitoring)return;
+monitoring=true;
+document.getElementById("startBtn").disabled=true;
+document.getElementById("stopBtn").disabled=false;
+setStatus("running","System Monitoring");
+document.getElementById("updateStatus").textContent="Receiving sensor values every 3 seconds";
+showToast("Real-time monitoring started.");
+fetchSensorData();
+pollingTimer=setInterval(fetchSensorData,POLL_INTERVAL);
+}
+
+function stopMonitoring(){
+monitoring=false;
+if(pollingTimer){clearInterval(pollingTimer);pollingTimer=null}
+document.getElementById("startBtn").disabled=false;
+document.getElementById("stopBtn").disabled=true;
+setStatus("standby","System Standby");
+document.getElementById("updateStatus").textContent="Monitoring is currently stopped";
+showToast("Monitoring stopped.");
+}
+
+async function fetchSensorData(){
+if(!monitoring)return;
+try{
+const response=await fetch("/api/read-sensor",{cache:"no-store"});
+const result=await response.json();
+if(!response.ok||!result.success)throw new Error(result.error||result.message||"Sensor request failed");
+const data=result;
+
+updateSensor("gas1",data.gas1);
+updateSensor("gas2",data.gas2);
+updateSensor("gas3",data.gas3);
+
+addGraphReading(data.gas1,data.gas2,data.gas3,data.created_at);
+
+document.getElementById("prediction").textContent=formatPrediction(data.prediction);
+
+const confidence=Number(data.confidence||0);
+document.getElementById("confidence").textContent=confidence.toFixed(2)+"%";
+document.getElementById("predictionTime").textContent=data.created_at;
+
+updateConfidence(confidence);
+
+
+document.getElementById("updateStatus").textContent="Last reading: "+data.created_at;
+
+renderRecentRecords(result.latest_records||[]);
+
+/* ALERT ONLY FOR NON-NORMAL PREDICTIONS */
+if(data.id!==undefined&&data.id!==null&&data.id!==lastAlertedRecordId){
+lastAlertedRecordId=data.id;
+if(data.prediction&&data.prediction!=="Normal"){
+showPredictionAlert(data);
+}
+}
+
+setStatus("running","System Monitoring");
+}catch(error){
+console.error(error);
+setStatus("error","Sensor Connection Error");
+showToast("Unable to receive sensor data.");
+}
+}
+
+function updateSensor(name,value){
+const number=Number(value||0);
+const safe=Math.max(0,number);
+const max=10000;
+const percent=Math.min(100,(safe/max)*100);
+document.getElementById(name+"Value").innerHTML=`${safe.toFixed(0)} <small>ADC</small>`;
+document.getElementById(name+"Progress").style.width=percent+"%";
+document.getElementById(name+"Percent").textContent=percent.toFixed(1)+"%";
+}
+
+function updateConfidence(value){
+const safe=Math.max(0,Math.min(100,Number(value)||0));
+const degrees=(safe/100)*360;
+document.getElementById("confidenceRing").style.background=`conic-gradient(#22d3ee 0deg,#22d3ee ${degrees}deg,rgba(255,255,255,.08) ${degrees}deg,rgba(255,255,255,.08) 360deg)`;
+}
+
+function formatPrediction(prediction){
+return String(prediction||"Unknown").replace(/_/g," ");
+}
+
+function renderRecentRecords(records){
+const table=document.getElementById("recentTable");
+if(!records.length){
+table.innerHTML=`<tr><td colspan="7" class="empty">No sensor records yet. Press START MONITORING to begin.</td></tr>`;
+return;
+}
+table.innerHTML=records.slice(0,5).map(record=>`
+<tr>
+<td>${escapeHtml(record.id)}</td>
+<td>${escapeHtml(record.gas1)}</td>
+<td>${escapeHtml(record.gas2)}</td>
+<td>${escapeHtml(record.gas3)}</td>
+<td><span class="prediction-badge">${escapeHtml(formatPrediction(record.prediction))}</span></td>
+<td class="confidence-cell">${Number(record.confidence||0).toFixed(2)}%</td>
+<td class="timestamp">${escapeHtml(record.created_at)}</td>
+</tr>`).join("");
+}
+
+function showPredictionAlert(data){
+document.getElementById("alertPrediction").textContent=formatPrediction(data.prediction);
+document.getElementById("alertConfidence").textContent="Confidence: "+Number(data.confidence||0).toFixed(2)+"%";
+document.getElementById("alertTime").textContent=data.created_at;
+document.getElementById("alertGas1").textContent=data.gas1;
+document.getElementById("alertGas2").textContent=data.gas2;
+document.getElementById("alertGas3").textContent=data.gas3;
+document.getElementById("alertOverlay").classList.add("show");
+}
+
+function closeAlert(){
+document.getElementById("alertOverlay").classList.remove("show");
+}
+
+function openDatabase(){
+window.location.href="/database";
+}
+
+function openClearModal(){
+document.getElementById("confirmOverlay").classList.add("show");
+}
+
+function closeClearModal(){
+document.getElementById("confirmOverlay").classList.remove("show");
+}
+
+async function clearDatabase(){
+closeClearModal();
+try{
+const response=await fetch("/api/delete-database",{method:"DELETE"});
+const result=await response.json();
+if(!response.ok||!result.success)throw new Error("Database deletion failed");
+renderRecentRecords([]);
+
+graphLabels.length=0;
+graphGas1.length=0;
+graphGas2.length=0;
+graphGas3.length=0;
+if(liveSensorChart)liveSensorChart.update("none");
+showToast("All database records deleted.");
+}catch(error){
+console.error(error);
+showToast("Unable to clear database.");
+}
+}
+
+function setStatus(state,text){
+const dot=document.getElementById("statusDot");
+dot.className="status-dot";
+if(state==="running")dot.classList.add("running");
+if(state==="error")dot.classList.add("error");
+document.getElementById("statusText").textContent=text;
+}
+
+let toastTimer=null;
+function showToast(message){
+const toast=document.getElementById("toast");
+toast.textContent=message;
+toast.classList.add("show");
+clearTimeout(toastTimer);
+toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);
+}
+
+function escapeHtml(value){
+return String(value??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+initializeLiveSensorChart();
+</script>
+</body>
+</html>
