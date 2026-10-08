@@ -373,4 +373,4 @@ Add your preferred license here (e.g. MIT).
 
 ## Author
 
-Your name – [GitHub profile](https://github.com/<your-username>)
+Your name – POTAKARI SMART
